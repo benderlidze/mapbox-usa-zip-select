@@ -30,7 +30,7 @@
             right: 70px;
             background: rgba(255, 255, 255, 0.3);
             padding: 10px;
-            z-index: 10;
+            z-index: 1;
             color: white;
         }
 
@@ -72,7 +72,7 @@
                     }
                 }).catch(e => console.log('e', e))
 
-            mapboxgl.accessToken = 'pk.eyJ1IjoidHJ1c3RzY291dCIsImEiOiJja3d3ODZvdnMwMTR4MnZydW01c3RsbG92In0.qlNQ_ZeZAEeRC4-reSbroA';
+            mapboxgl.accessToken = 'pk.eyJ1IjoibWljaGFlbC1iaXN0bGluZSIsImEiOiJjbHY1YnR2ZmYwMWNyMml0M3Q4M2N1Z3I0In0.y0Nolff1spDvB362Z6MCYg';
             const map = new mapboxgl.Map({
                 container: 'map',
                 style: 'mapbox://styles/mapbox/dark-v10',
@@ -128,14 +128,14 @@
 
                 map.addSource('mapbox-usa-county', {
                     "type": "vector",
-                    "url": "mapbox://trustscout.9shrei3u"
+                    "url": "mapbox://michael-bistline.32vu57ci"
                 });
 
                 map.addLayer({
                     "id": "county",
                     "type": "fill",
                     "source": "mapbox-usa-county",
-                    "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
+                    "source-layer": "tl_2019_us_zcta510_1-4t12aq",
                     "paint": {
                         "fill-color": 'white',
                         "fill-opacity": 0.1,
@@ -146,23 +146,23 @@
                     "id": "countyBorder",
                     "type": "line",
                     "source": "mapbox-usa-county",
-                    "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
+                    "source-layer": "tl_2019_us_zcta510_1-4t12aq",
                     'paint': {
                         'line-width': 1,
                         'line-color': '#36193f'
                     }
                 });
 
-                map.addSource('mapbox-usa-postcodes', {
-                    "type": "vector",
-                    "url": "mapbox://trustscout.9shrei3u"
-                });
+                // map.addSource('mapbox-usa-postcodes', {
+                //     "type": "vector",
+                //     "url": "mapbox://trustscout.9shrei3u"
+                // });
 
                 map.addLayer({
                     "id": "boundary",
                     "type": "fill",
-                    "source": "mapbox-usa-postcodes",
-                    "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
+                    "source": "mapbox-usa-county",
+                    "source-layer": "tl_2019_us_zcta510_1-4t12aq",
                     "paint": {
                         "fill-color": 'black',
                         "fill-opacity": 0.01,
@@ -176,19 +176,19 @@
                     var features = map.queryRenderedFeatures(e.point, {
                         layers: ['boundary']
                     });
-                    var code = features[0].properties.ZCTA5CE20
+                    var code = features[0].properties.ZCTA5CE10
                     console.log('', code);
                     console.log('', features[0].properties);
 
                     map.setPaintProperty('boundary', "fill-color", ['case',
                         ['any',
-                            ['any', ['==', ['get', 'GEOID20'], code]]
+                            ['any', ['==', ['get', 'GEOID10'], code]]
                         ], "#36193f",
                         'black'
                     ])
 
                     map.setPaintProperty('boundary',
-                        "fill-opacity", ['case', ['any', ['==', ['get', 'GEOID20'], code]], 1, 0.01])
+                        "fill-opacity", ['case', ['any', ['==', ['get', 'GEOID10'], code]], 1, 0.01])
 
                 })
 
@@ -253,40 +253,40 @@
 
             });
 
-            function selectById(countySelection) {
-                var filter = ['any'];
-                Object.keys(countySelection).map(function (code) {
-                    //console.log('', code);
-                    filter.push(['==', ['get', 'geoid10'], code])
-                })
-                map.setPaintProperty('boundary', "fill-color", ['case',
-                    ['any',
-                        filter
-                    ], "green",
-                    'black'
-                ])
-                var json = {};
-                var codes = Object.keys(countySelection);
-                var features = map.queryRenderedFeatures({
-                    layers: ['boundary']
-                });
-                features.forEach(function (item) {
-                    if (codes.includes(item.properties.geoid10)) {
-                        json[item.properties.geoid10] = item.geometry;
-                    }
-                })
+            // function selectById(countySelection) {
+            //     var filter = ['any'];
+            //     Object.keys(countySelection).map(function (code) {
+            //         //console.log('', code);
+            //         filter.push(['==', ['get', 'geoid10'], code])
+            //     })
+            //     map.setPaintProperty('boundary', "fill-color", ['case',
+            //         ['any',
+            //             filter
+            //         ], "green",
+            //         'black'
+            //     ])
+            //     var json = {};
+            //     var codes = Object.keys(countySelection);
+            //     var features = map.queryRenderedFeatures({
+            //         layers: ['boundary']
+            //     });
+            //     features.forEach(function (item) {
+            //         if (codes.includes(item.properties.geoid10)) {
+            //             json[item.properties.geoid10] = item.geometry;
+            //         }
+            //     })
 
 
-                // console.log('', json);
-                var text = Object.keys(json).map(function (item) {
-                    return "<b>ZIP: </b>" + item + " "
-                }).join("<br>")
-                info.innerHTML = text
+            //     // console.log('', json);
+            //     var text = Object.keys(json).map(function (item) {
+            //         return "<b>ZIP: </b>" + item + " "
+            //     }).join("<br>")
+            //     info.innerHTML = text
 
 
-                const zip = Object.keys(json).map(i => i).join("")
-                window.parent.postMessage({ message: "zipCode", value: zip }, "*");
-            }
+            //     const zip = Object.keys(json).map(i => i).join("")
+            //     window.parent.postMessage({ message: "zipCode", value: zip }, "*");
+            // }
         });
     </script>
 
