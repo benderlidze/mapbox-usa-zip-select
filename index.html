@@ -55,234 +55,239 @@
 
     <script>
 
-        mapboxgl.accessToken = 'pk.eyJ1IjoidHJ1c3RzY291dCIsImEiOiJja3d3ODZvdnMwMTR4MnZydW01c3RsbG92In0.qlNQ_ZeZAEeRC4-reSbroA';
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/dark-v10',
-            zoom: 4,
-            center: { lng: -98.9855859855307, lat: 36.76414316487178 }
-        });
+        document.addEventListener('DOMContentLoaded', async function () {
 
-        const geocoder = new MapboxGeocoder({
-            accessToken: mapboxgl.accessToken,
-            mapboxgl: mapboxgl,
-            countries: 'us',
-            placeholder: 'Search by zip code',
-        });
-        map.addControl(geocoder);
+            let { lat, lng } = { lng: -98.9855859855307, lat: 36.76414316487178 }
+            let zoom = 4;
 
-        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-        // Add geolocate control to the map.
-        map.addControl(
-            new mapboxgl.GeolocateControl({
-                positionOptions: {
-                    enableHighAccuracy: true
-                },
-                trackUserLocation: true,
-                showUserHeading: true
-            }), 'top-right'
-        );
-
-
-        map.on('load', function () {
-
-            const layers = map.getStyle().layers;
-            //remove buildings roads tunnels
-            layers.forEach(function (layer) {
-                layer.id.includes('building') ? map.removeLayer(layer.id) : null;
-                layer.id.includes('road') ? map.removeLayer(layer.id) : null;
-                layer.id.includes('tunnel') ? map.removeLayer(layer.id) : null;
-            });
-
-            // if (navigator.geolocation) {
-            //     navigator.geolocation.getCurrentPosition(function (position) {
-            //         const longitude = position.coords.longitude;
-            //         const latitude = position.coords.latitude;
-
-            //         if (longitude && latitude) {
-            //             map.flyTo({
-            //                 center: [longitude, latitude],
-            //                 zoom: 10
-            //             });
-            //         }
-            //     });
-            // }
-
-            //try to fetch the user location by ip
-            fetch('https://fzfwlzopzs-staging.onrocket.site/ip-api.php')
+            await fetch('https://fzfwlzopzs-staging.onrocket.site/ip-api.php')
                 .then(response => response.json())
                 .then(data => {
                     console.log('data', data);
-                    const { lat, lon } = data;
-                    if (lat && lon) {
-                        map.flyTo({
-                            center: [lon, lat],
-                            zoom: 10
-                        });
+                    const { lat: _lat, lon: _lon } = data;
+                    if (_lat && _lon) {
+                        lat = _lat;
+                        lng = _lon;
+                        zoom = 10;
+                    }
+                }).catch(e => console.log('e', e))
+
+            mapboxgl.accessToken = 'pk.eyJ1IjoidHJ1c3RzY291dCIsImEiOiJja3d3ODZvdnMwMTR4MnZydW01c3RsbG92In0.qlNQ_ZeZAEeRC4-reSbroA';
+            const map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/dark-v10',
+                zoom: zoom,
+                center: { lng, lat }
+            });
+
+            const geocoder = new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                mapboxgl: mapboxgl,
+                countries: 'us',
+                placeholder: 'Search by zip code',
+            });
+            map.addControl(geocoder);
+
+            map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+            // Add geolocate control to the map.
+            map.addControl(
+                new mapboxgl.GeolocateControl({
+                    positionOptions: {
+                        enableHighAccuracy: true
+                    },
+                    trackUserLocation: true,
+                    showUserHeading: true
+                }), 'top-right'
+            );
+
+
+            map.on('load', async function () {
+
+                const layers = map.getStyle().layers;
+                //remove buildings roads tunnels
+                layers.forEach(function (layer) {
+                    layer.id.includes('building') ? map.removeLayer(layer.id) : null;
+                    layer.id.includes('road') ? map.removeLayer(layer.id) : null;
+                    layer.id.includes('tunnel') ? map.removeLayer(layer.id) : null;
+                });
+
+                // if (navigator.geolocation) {
+                //     navigator.geolocation.getCurrentPosition(function (position) {
+                //         const longitude = position.coords.longitude;
+                //         const latitude = position.coords.latitude;
+                //         if (longitude && latitude) {
+                //             map.flyTo({
+                //                 center: [longitude, latitude],
+                //                 zoom: 10
+                //             });
+                //         }
+                //     });
+                // }
+
+                //try to fetch the user location by ip
+
+                map.addSource('mapbox-usa-county', {
+                    "type": "vector",
+                    "url": "mapbox://trustscout.9shrei3u"
+                });
+
+                map.addLayer({
+                    "id": "county",
+                    "type": "fill",
+                    "source": "mapbox-usa-county",
+                    "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
+                    "paint": {
+                        "fill-color": 'white',
+                        "fill-opacity": 0.1,
+                        'fill-outline-color': "red",
+                    },
+                });
+                map.addLayer({
+                    "id": "countyBorder",
+                    "type": "line",
+                    "source": "mapbox-usa-county",
+                    "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
+                    'paint': {
+                        'line-width': 1,
+                        'line-color': '#36193f'
                     }
                 });
 
-            map.addSource('mapbox-usa-county', {
-                "type": "vector",
-                "url": "mapbox://trustscout.9shrei3u"
-            });
-
-            map.addLayer({
-                "id": "county",
-                "type": "fill",
-                "source": "mapbox-usa-county",
-                "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
-                "paint": {
-                    "fill-color": 'white',
-                    "fill-opacity": 0.1,
-                    'fill-outline-color': "red",
-                },
-            });
-            map.addLayer({
-                "id": "countyBorder",
-                "type": "line",
-                "source": "mapbox-usa-county",
-                "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
-                'paint': {
-                    'line-width': 1,
-                    'line-color': '#36193f'
-                }
-            });
-
-            map.addSource('mapbox-usa-postcodes', {
-                "type": "vector",
-                "url": "mapbox://trustscout.9shrei3u"
-            });
-
-            map.addLayer({
-                "id": "boundary",
-                "type": "fill",
-                "source": "mapbox-usa-postcodes",
-                "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
-                "paint": {
-                    "fill-color": 'black',
-                    "fill-opacity": 0.01,
-                    'fill-outline-color': "black",
-                },
-            });
-
-
-            map.on('click', "boundary", function (e) {
-
-                var features = map.queryRenderedFeatures(e.point, {
-                    layers: ['boundary']
+                map.addSource('mapbox-usa-postcodes', {
+                    "type": "vector",
+                    "url": "mapbox://trustscout.9shrei3u"
                 });
-                var code = features[0].properties.ZCTA5CE20
-                console.log('', code);
-                console.log('', features[0].properties);
 
-                map.setPaintProperty('boundary', "fill-color", ['case',
-                    ['any',
-                        ['any', ['==', ['get', 'GEOID20'], code]]
-                    ], "#36193f",
-                    'black'
-                ])
-
-                map.setPaintProperty('boundary',
-                    "fill-opacity", ['case', ['any', ['==', ['get', 'GEOID20'], code]], 1, 0.01])
-
-            })
-
-            var currentGEOID = 0;
-
-            map.on('mousemove', 'boundary', function (e) {
-                map.getCanvas().style.cursor = 'pointer';
-            });
-
-            map.on('mouseleave', 'boundary', function () {
-                map.getCanvas().style.cursor = '';
-            });
+                map.addLayer({
+                    "id": "boundary",
+                    "type": "fill",
+                    "source": "mapbox-usa-postcodes",
+                    "source-layer": "tl_2021_us_zcta520_1-5hu4o2",
+                    "paint": {
+                        "fill-color": 'black',
+                        "fill-opacity": 0.01,
+                        'fill-outline-color': "black",
+                    },
+                });
 
 
-            map.addSource('centers', {
-                'type': 'geojson',
-                'data': {
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'Polygon',
-                        'coordinates': []
-                    }
-                }
-            });
+                map.on('click', "boundary", function (e) {
 
+                    var features = map.queryRenderedFeatures(e.point, {
+                        layers: ['boundary']
+                    });
+                    var code = features[0].properties.ZCTA5CE20
+                    console.log('', code);
+                    console.log('', features[0].properties);
 
-            map.addLayer({
-                'id': 'labels',
-                'type': 'symbol',
-                'source': 'centers',
-                'paint': {
-                    'text-color': "white",
-                    "text-halo-color": "white",
-                    "text-halo-width": 0,
-                    "text-halo-blur": 0
-                },
-                'layout': {
-                    'text-field': ['get', 'zip'],
-                    // 'text-variable-anchor': ['bottom'],
-                    'text-radial-offset': 1,
-                    'text-justify': 'auto',
-                },
-                "minzoom": 8,
-            });
-            // map.addLayer({
-            //     "id": "circles1",
-            //     "source": "centers",
-            //     "type": "circle",
-            //     "paint": {
-            //         "circle-radius": 5,
-            //         "circle-color": "#007cbf",
-            //     },
-            // });
+                    map.setPaintProperty('boundary', "fill-color", ['case',
+                        ['any',
+                            ['any', ['==', ['get', 'GEOID20'], code]]
+                        ], "#36193f",
+                        'black'
+                    ])
 
-            fetch("zip.json")
-                .then(i => i.json())
-                .then(i => {
-                    console.log('i', i);
-                    const collection = turf.featureCollection(i)
-                    map.getSource('centers').setData(collection)
+                    map.setPaintProperty('boundary',
+                        "fill-opacity", ['case', ['any', ['==', ['get', 'GEOID20'], code]], 1, 0.01])
+
                 })
 
-        });
+                var currentGEOID = 0;
 
-        function selectById(countySelection) {
-            var filter = ['any'];
-            Object.keys(countySelection).map(function (code) {
-                //console.log('', code);
-                filter.push(['==', ['get', 'geoid10'], code])
-            })
-            map.setPaintProperty('boundary', "fill-color", ['case',
-                ['any',
-                    filter
-                ], "green",
-                'black'
-            ])
-            var json = {};
-            var codes = Object.keys(countySelection);
-            var features = map.queryRenderedFeatures({
-                layers: ['boundary']
+                map.on('mousemove', 'boundary', function (e) {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+
+                map.on('mouseleave', 'boundary', function () {
+                    map.getCanvas().style.cursor = '';
+                });
+
+
+                map.addSource('centers', {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'Feature',
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': []
+                        }
+                    }
+                });
+
+
+                map.addLayer({
+                    'id': 'labels',
+                    'type': 'symbol',
+                    'source': 'centers',
+                    'paint': {
+                        'text-color': "white",
+                        "text-halo-color": "white",
+                        "text-halo-width": 0,
+                        "text-halo-blur": 0
+                    },
+                    'layout': {
+                        'text-field': ['get', 'zip'],
+                        // 'text-variable-anchor': ['bottom'],
+                        'text-radial-offset': 1,
+                        'text-justify': 'auto',
+                    },
+                    "minzoom": 8,
+                });
+                // map.addLayer({
+                //     "id": "circles1",
+                //     "source": "centers",
+                //     "type": "circle",
+                //     "paint": {
+                //         "circle-radius": 5,
+                //         "circle-color": "#007cbf",
+                //     },
+                // });
+
+                fetch("zip.json")
+                    .then(i => i.json())
+                    .then(i => {
+                        console.log('i', i);
+                        const collection = turf.featureCollection(i)
+                        map.getSource('centers').setData(collection)
+                    })
+
             });
-            features.forEach(function (item) {
-                if (codes.includes(item.properties.geoid10)) {
-                    json[item.properties.geoid10] = item.geometry;
-                }
-            })
+
+            function selectById(countySelection) {
+                var filter = ['any'];
+                Object.keys(countySelection).map(function (code) {
+                    //console.log('', code);
+                    filter.push(['==', ['get', 'geoid10'], code])
+                })
+                map.setPaintProperty('boundary', "fill-color", ['case',
+                    ['any',
+                        filter
+                    ], "green",
+                    'black'
+                ])
+                var json = {};
+                var codes = Object.keys(countySelection);
+                var features = map.queryRenderedFeatures({
+                    layers: ['boundary']
+                });
+                features.forEach(function (item) {
+                    if (codes.includes(item.properties.geoid10)) {
+                        json[item.properties.geoid10] = item.geometry;
+                    }
+                })
 
 
-            // console.log('', json);
-            var text = Object.keys(json).map(function (item) {
-                return "<b>ZIP: </b>" + item + " "
-            }).join("<br>")
-            info.innerHTML = text
+                // console.log('', json);
+                var text = Object.keys(json).map(function (item) {
+                    return "<b>ZIP: </b>" + item + " "
+                }).join("<br>")
+                info.innerHTML = text
 
 
-            const zip = Object.keys(json).map(i => i).join("")
-            window.parent.postMessage({ message: "zipCode", value: zip }, "*");
-        }
+                const zip = Object.keys(json).map(i => i).join("")
+                window.parent.postMessage({ message: "zipCode", value: zip }, "*");
+            }
+        });
     </script>
 
 </body>
