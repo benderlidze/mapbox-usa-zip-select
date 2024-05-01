@@ -54,7 +54,7 @@
     </div>
 
     <script>
-
+        let map;
         document.addEventListener('DOMContentLoaded', async function () {
 
             let { lat, lng } = { lng: -98.9855859855307, lat: 36.76414316487178 }
@@ -73,7 +73,7 @@
                 }).catch(e => console.log('e', e))
 
             mapboxgl.accessToken = 'pk.eyJ1IjoibWljaGFlbC1iaXN0bGluZSIsImEiOiJjbHY1YnR2ZmYwMWNyMml0M3Q4M2N1Z3I0In0.y0Nolff1spDvB362Z6MCYg';
-            const map = new mapboxgl.Map({
+            map = new mapboxgl.Map({
                 container: 'map',
                 style: 'mapbox://styles/mapbox/dark-v10',
                 zoom: zoom,
@@ -85,6 +85,7 @@
                 mapboxgl: mapboxgl,
                 countries: 'us',
                 placeholder: 'Search by zip code',
+
             });
             map.addControl(geocoder);
 
@@ -96,12 +97,22 @@
                         enableHighAccuracy: true
                     },
                     trackUserLocation: true,
-                    showUserHeading: true
+                    showUserHeading: true,
                 }), 'top-right'
             );
 
 
+
             map.on('load', async function () {
+
+                geocoder.on('result', function (e) {
+                    const type = e.result.place_type[0];
+                    if (type === 'postcode') {
+                        const zip = e.result.text;
+                        console.log('zip', zip);
+                        hightLightZip(zip)
+                    }
+                });
 
                 const layers = map.getStyle().layers;
                 //remove buildings roads tunnels
@@ -170,26 +181,24 @@
                     },
                 });
 
-
-                map.on('click', "boundary", function (e) {
-
-                    var features = map.queryRenderedFeatures(e.point, {
-                        layers: ['boundary']
-                    });
-                    var code = features[0].properties.ZCTA5CE10
-                    console.log('', code);
-                    console.log('', features[0].properties);
-
+                function hightLightZip(code) {
                     map.setPaintProperty('boundary', "fill-color", ['case',
                         ['any',
                             ['any', ['==', ['get', 'GEOID10'], code]]
                         ], "#36193f",
                         'black'
                     ])
-
                     map.setPaintProperty('boundary',
                         "fill-opacity", ['case', ['any', ['==', ['get', 'GEOID10'], code]], 1, 0.01])
 
+                }
+
+                map.on('click', "boundary", function (e) {
+                    const features = map.queryRenderedFeatures(e.point, {
+                        layers: ['boundary']
+                    });
+                    const code = features[0].properties.ZCTA5CE10
+                    hightLightZip(code)
                 })
 
                 var currentGEOID = 0;
